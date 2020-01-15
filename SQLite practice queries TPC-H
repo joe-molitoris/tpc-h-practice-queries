@@ -1,0 +1,62 @@
+#What are the names of the customers who have a balance that is greater than $9000 and are in the "HOUSEHOLD" market segment?
+SELECT C_NAME
+FROM CUSTOMERS
+WHERE C_ACCTBAL > 9000
+AND C_MKTSEGMENT == "HOUSEHOLD"
+
+#Which parts are supplied by at least 1 supplier from the region Middle East? Include the part name in your answer along with the part key. Eliminate any duplicates and sort your answer based on the part key.
+SELECT DISTINCT(P_PARTKEY), P_NAME
+FROM PART p
+INNER JOIN PARTSUPP ps
+ON p.P_PARTKEY = ps.PS_PARTKEY
+INNER JOIN SUPPLIER s
+ON ps.PS_SUPPKEY = s.S_SUPPKEY
+INNER JOIN NATION n
+ON s.S_NATIONKEY = n.N_NATIONKEY
+INNER JOIN REGION r
+ON n.N_REGIONKEY = r.R_REGIONKEY
+WHERE r.R_NAME = "MIDDLE EAST"
+ORDER BY p.P_PARTKEY
+
+#How many distinct parts are supplied by European suppliers?
+SELECT COUNT(DISTINCT(P_PARTKEY)) AS DistinctParts
+FROM PART p
+INNER JOIN PARTSUPP ps
+ON p.P_PARTKEY = ps.PS_PARTKEY
+INNER JOIN SUPPLIER s
+ON ps.PS_SUPPKEY = s.S_SUPPKEY
+INNER JOIN NATION n
+ON s.S_NATIONKEY = n.N_NATIONKEY
+INNER JOIN REGION r
+ON n.N_REGIONKEY = r.R_REGIONKEY
+WHERE r.R_NAME == "EUROPE"
+
+#Which parts are not supplied by any supplier from Europe? Include the part name in your answer.
+SELECT P_NAME
+FROM PART p
+WHERE P_NAME NOT IN (SELECT P_NAME
+                     FROM PART p
+                     INNER JOIN PARTSUPP ps
+                     ON p.P_PARTKEY = ps.PS_PARTKEY
+                     INNER JOIN SUPPLIER s
+                     ON ps.PS_SUPPKEY = s.S_SUPPKEY
+                     INNER JOIN NATION n
+                     ON s.S_NATIONKEY = n.N_NATIONKEY
+                     INNER JOIN REGION r
+                     ON n.N_REGIONKEY = r.R_REGIONKEY
+                     WHERE r.R_NAME == "EUROPE")
+                    
+#Which customers ordered ONLY from suppliers in the same region? Include the customer name, phone, and region in your answer, and remove duplicates.
+SELECT C_NAME, C_PHONE, COUNT(DISTINCT(r.R_NAME)) AS Regions
+FROM customer c
+LEFT JOIN ORDERS o
+ON c.C_CUSTKEY = o.O_CUSTKEY
+LEFT JOIN LINEITEM l
+ON o.O_ORDERKEY = l.L_ORDERKEY
+LEFT JOIN SUPPLIER s
+ON l.L_SUPPKEY = s.S_SUPPKEY
+LEFT JOIN NATION n
+ON s.S_NATIONKEY = n.N_NATIONKEY
+LEFT JOIN REGION r
+ON n.N_REGIONKEY = r.R_REGIONKEY
+GROUP BY C_NAME
