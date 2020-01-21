@@ -47,16 +47,40 @@ WHERE P_NAME NOT IN (SELECT P_NAME
                      WHERE r.R_NAME == "EUROPE")
                     
 #Which customers ordered ONLY from suppliers in the same region? Include the customer name, phone, and region in your answer, and remove duplicates.
-SELECT C_NAME, C_PHONE, COUNT(DISTINCT(r.R_NAME)) AS Regions
-FROM customer c
-LEFT JOIN ORDERS o
-ON c.C_CUSTKEY = o.O_CUSTKEY
-LEFT JOIN LINEITEM l
+SELECT C_NAME, C_PHONE, R_REGION
+FROM ORDERS o
+INNER JOIN LINEITEM l
 ON o.O_ORDERKEY = l.L_ORDERKEY
-LEFT JOIN SUPPLIER s
+INNER JOIN SUPPLIER s
 ON l.L_SUPPKEY = s.S_SUPPKEY
-LEFT JOIN NATION n
+INNER JOIN NATION n
 ON s.S_NATIONKEY = n.N_NATIONKEY
-LEFT JOIN REGION r
+INNER JOIN REGION r
 ON n.N_REGIONKEY = r.R_REGIONKEY
-GROUP BY C_NAME
+INNER JOIN CUTOMER c
+ON o.O_CUSTKEY = c.C_CUSTKEY
+GROUP BY O_CUSTKEY
+HAVING COUNT(DISTINCT(R_REGIONKEY)) == 1
+
+#What is the highest extended price for parts that had a discount larger than the tax when ordered?
+SELECT MAX(L_EXTENDEDPRICE) AS MaxPrice
+FROM LINEITEMS
+WHERE L_DISCOUNT > L_TAX
+
+#The number of orders that had all of their items received in at most 2 weeks of shipment. 
+WITH twoweeks AS (SELECT O_ORDERKEY, (julianday(L_RECEIPTDATE) - julianday(L_SHIPDATE) <= 14) AS DateDiff
+                  FROM ORDERS o
+                  LEFT JOIN LINEITEM l
+                  ON o.O_ORDERKEY = l.L_ORDERKEY)
+ 
+SELECT O_ORDERKEY
+FROM ORDERS o
+LEFT JOIN twoweeks t
+ON o.O_ORDERKEY = t.O_ORDERKEY
+GROUP BY o.O_ORDERKEY
+HAVING COUNT(DISTINCT(DateDiff)) == 1
+AND MAX(DateDiff) == 1
+
+
+
+
